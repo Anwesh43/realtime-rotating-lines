@@ -167,6 +167,12 @@ class Stage {
                 this.render()
             })
         }
+    }
 
+    static init() {
+        const stage = new Stage()
+        stage.initCanvas()
+        stage.render()
+        stage.handleTap()
     }
 }
