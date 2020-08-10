@@ -100,3 +100,22 @@ class RotatingLineContainer {
         })
     }
 }
+
+class Animator {
+    animated = false
+    interval
+
+    start(cb) {
+        if (!this.animated) {
+            this.animated = true
+            this.interval = setInterval(cb, 20)
+        }
+    }
+
+    stop() {
+        if (this.animated) {
+            this.animated = false
+            clearInterval(this.interval)
+        }
+    }
+}
