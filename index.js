@@ -39,3 +39,32 @@ class State {
         }
     }
 }
+
+class RotatingLine {
+
+    x
+    y
+    constructor(x, y) {
+        this.x = x
+        this.y = y
+    }
+
+    draw(context) {
+        const size = Math.min(w, h) / sizeFactor
+        context.lineWidth = Math.min(w, h) / strokeFactor
+        context.strokeStyle = 'indigo'
+        const yh = h / hFactor
+        context.save()
+        context.translate(this.x, this.y)
+        DrawingUtil.drawLine(context, -size, 0, size, 0)
+        context.restore()
+    }
+
+    update(cb) {
+        this.state.update(cb)
+    }
+
+    startUpdating(cb) {
+        this.state.startUpdating(cb)
+    }
+}
