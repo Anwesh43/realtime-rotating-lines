@@ -68,3 +68,35 @@ class RotatingLine {
         this.state.startUpdating(cb)
     }
 }
+
+class RotatingLineContainer {
+
+    rotatingLines = []
+
+    draw(context) {
+        this.rotatingLines.forEach((rl) => {
+            rl.draw(context)
+        })
+    }
+
+    update(cb) {
+        this.rotatingLines.forEach((rl, i) => {
+            rl.update(() => {
+                this.rotatingLines.splice(0, 1)
+                if (this.rotatingLines.length == 0) {
+                    cb()
+                }
+            })
+        })
+    }
+
+    startUpdating(cb) {
+        this.rotatingLines.forEach((rl) => {
+            rl.startUpdating(() => {
+              if (this.rotatingLines.length == 1) {
+                  cb()
+              }
+            })
+        })
+    }
+}
