@@ -143,3 +143,30 @@ class Renderer {
         })
     }
 }
+
+class Stage {
+
+    canvas = document.createElement('canvas')
+    context
+    renderer = new Renderer()
+    initCanvas() {
+        this.canvas.width = w
+        this.canvas.height = h
+        this.context = this.canvas.getContext('2d')
+        document.body.appendChild(this.canvas)
+    }
+
+    render() {
+        this.renderer.render(context)
+    }
+
+    handleTap() {
+        this.canvas.onmousedown = (e) => {
+            const {offsetX, offsetY} = e
+            this.render.handleTap(offsetX, offsetY, () => {
+                this.render()
+            })
+        }
+
+    }
+}
