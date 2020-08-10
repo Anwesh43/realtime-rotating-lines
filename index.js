@@ -50,13 +50,15 @@ class RotatingLine {
     }
 
     draw(context) {
+        const sf = Math.sin(this.state.scale * Math.PI)
         const size = Math.min(w, h) / sizeFactor
         context.lineWidth = Math.min(w, h) / strokeFactor
         context.strokeStyle = 'indigo'
         const yh = h / hFactor
         context.save()
-        context.translate(this.x, this.y)
-        DrawingUtil.drawLine(context, -size, 0, size, 0)
+        context.translate(this.x, this.y - yh * sf)
+        context.rotate(rot * sf)
+        DrawingUtil.drawLine(context, -size * sf , 0, size * sf, 0)
         context.restore()
     }
 
@@ -117,5 +119,27 @@ class Animator {
             this.animated = false
             clearInterval(this.interval)
         }
+    }
+}
+
+class Renderer {
+
+    animator = new Animator()
+    rlc  = new RotatingLineContainer()
+
+    render(context) {
+        this.rlc.draw(context)
+    }
+
+    handleTap(x, y, cb) {
+        this.rlc.startUpdating(() => {
+            this.animator.start(() => {
+                cb()
+                this.rlc.update(() => {
+                    this.animator.stop()
+                    cb()
+                })
+            })
+        })
     }
 }
