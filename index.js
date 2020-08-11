@@ -8,7 +8,7 @@ const hFactor = 3
 
 class DrawingUtil {
 
-    static drawLine(context : CanvasRenderingContext2D, x1 : number, y1 : number, x2 : number, y2 : number) {
+    static drawLine(context , x1, x2, y1, y2) {
         context.beginPath()
         context.moveTo(x1, y1)
         context.lineTo(x2, y2)
@@ -44,6 +44,7 @@ class RotatingLine {
 
     x
     y
+    state = new State()
     constructor(x, y) {
         this.x = x
         this.y = y
@@ -101,6 +102,10 @@ class RotatingLineContainer {
             })
         })
     }
+
+    push(rl) {
+        this.rotatingLines.push(rl)
+    }
 }
 
 class Animator {
@@ -132,6 +137,10 @@ class Renderer {
     }
 
     handleTap(x, y, cb) {
+        console.log(x, y);
+        const rl = new RotatingLine(x, y)
+        this.rlc.push(rl)
+        console.log(rl)
         this.rlc.startUpdating(() => {
             this.animator.start(() => {
                 cb()
@@ -157,13 +166,15 @@ class Stage {
     }
 
     render() {
-        this.renderer.render(context)
+        this.context.fillStyle = '#BDBDBD'
+        this.context.fillRect(0, 0, w, h)
+        this.renderer.render(this.context)
     }
 
     handleTap() {
         this.canvas.onmousedown = (e) => {
             const {offsetX, offsetY} = e
-            this.render.handleTap(offsetX, offsetY, () => {
+            this.renderer.handleTap(offsetX, offsetY, () => {
                 this.render()
             })
         }
