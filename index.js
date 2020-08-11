@@ -2,13 +2,27 @@ const w = window.innerWidth
 const h = window.innerHeight
 const scGap = 0.02
 const strokeFactor= 90
-const sizeFactor = 2.9
-const rot = Math.PI / 2
-const hFactor = 3
+const sizeFactor = 5
+const rot = Math.PI
+const hFactor = 1.8
+
+class ScaleUtil {
+    static maxScale(scale, i, n) {
+        return Math.max(0, scale - i / n)
+    }
+
+    static divideScale(scale, i, n) {
+        return Math.min(1 / n, ScaleUtil.maxScale(scale, i, n)) * n
+    }
+
+    static sinify(scale) {
+        return Math.sin(scale * Math.PI)
+    }
+}
 
 class DrawingUtil {
 
-    static drawLine(context , x1, x2, y1, y2) {
+    static drawLine(context , x1, y1, x2, y2) {
         context.beginPath()
         context.moveTo(x1, y1)
         context.lineTo(x2, y2)
@@ -44,22 +58,27 @@ class RotatingLine {
 
     x
     y
+    color
     state = new State()
-    constructor(x, y) {
+    constructor(x, y, color) {
         this.x = x
         this.y = y
+        this.color = color
     }
 
     draw(context) {
-        const sf = Math.sin(this.state.scale * Math.PI)
+        const sf = ScaleUtil.sinify(this.state.scale)
+        const sf1 = ScaleUtil.divideScale(sf, 0, 2)
+        const sf2 = ScaleUtil.divideScale(sf, 1, 2)
         const size = Math.min(w, h) / sizeFactor
         context.lineWidth = Math.min(w, h) / strokeFactor
-        context.strokeStyle = 'indigo'
+        context.strokeStyle = this.color || 'indigo'
+        context.lineCap = 'round'
         const yh = h / hFactor
         context.save()
-        context.translate(this.x, this.y - yh * sf)
-        context.rotate(rot * sf)
-        DrawingUtil.drawLine(context, -size * sf , 0, size * sf, 0)
+        context.translate(this.x, this.y - yh * sf2)
+        context.rotate(rot * sf2)
+        DrawingUtil.drawLine(context, -size * sf1 , 0, size * sf1, 0)
         context.restore()
     }
 
@@ -87,6 +106,7 @@ class RotatingLineContainer {
             rl.update(() => {
                 this.rotatingLines.splice(0, 1)
                 if (this.rotatingLines.length == 0) {
+                    console.log("stopped")
                     cb()
                 }
             })
@@ -97,6 +117,7 @@ class RotatingLineContainer {
         this.rotatingLines.forEach((rl) => {
             rl.startUpdating(() => {
               if (this.rotatingLines.length == 1) {
+                  console.log("started")
                   cb()
               }
             })
@@ -137,10 +158,8 @@ class Renderer {
     }
 
     handleTap(x, y, cb) {
-        console.log(x, y);
         const rl = new RotatingLine(x, y)
         this.rlc.push(rl)
-        console.log(rl)
         this.rlc.startUpdating(() => {
             this.animator.start(() => {
                 cb()
