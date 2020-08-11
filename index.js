@@ -72,7 +72,7 @@ class RotatingLine {
         const sf2 = ScaleUtil.divideScale(sf, 1, 2)
         const size = Math.min(w, h) / sizeFactor
         context.lineWidth = Math.min(w, h) / strokeFactor
-        context.strokeStyle = this.color || 'indigo'
+        context.strokeStyle = this.color
         context.lineCap = 'round'
         const yh = h / hFactor
         context.save()
@@ -94,6 +94,11 @@ class RotatingLine {
 class RotatingLineContainer {
 
     rotatingLines = []
+    color
+
+    constructor(color) {
+        this.color = color
+    }
 
     draw(context) {
         this.rotatingLines.forEach((rl) => {
@@ -124,7 +129,8 @@ class RotatingLineContainer {
         })
     }
 
-    push(rl) {
+    push(x, y) {
+        const rl = new RotatingLine(x, y, this.color)
         this.rotatingLines.push(rl)
     }
 }
@@ -151,24 +157,35 @@ class Animator {
 class Renderer {
 
     animator = new Animator()
-    rlc  = new RotatingLineContainer()
+    animatorServer = new Animator()
+    rlc = new RotatingLineContainer('indigo')
+    rls = new RotatingLineContainer('#f44336')
 
     render(context) {
         this.rlc.draw(context)
+        this.rls.draw(context)
+    }
+
+    handleNewRL(x, y, rlc, animator, cb) {
+
+      rlc.push(x, y)
+      rlc.startUpdating(() => {
+          animator.start(() => {
+              cb()
+              rlc.update(() => {
+                  animator.stop()
+                  cb()
+              })
+          })
+      })
     }
 
     handleTap(x, y, cb) {
-        const rl = new RotatingLine(x, y)
-        this.rlc.push(rl)
-        this.rlc.startUpdating(() => {
-            this.animator.start(() => {
-                cb()
-                this.rlc.update(() => {
-                    this.animator.stop()
-                    cb()
-                })
-            })
-        })
+        this.handleNewRL(x, y, this.rlc, this.animator, cb)
+    }
+
+    handleSocket(x, y, cb) {
+        this.handleNewRL(x, y, this.rls, this.animatorServer, cb)
     }
 }
 
@@ -177,6 +194,7 @@ class Stage {
     canvas = document.createElement('canvas')
     context
     renderer = new Renderer()
+    socket
     initCanvas() {
         this.canvas.width = w
         this.canvas.height = h
@@ -193,10 +211,23 @@ class Stage {
     handleTap() {
         this.canvas.onmousedown = (e) => {
             const {offsetX, offsetY} = e
+
+            this.socket.emit('newRect', {offsetX, offsetY})
             this.renderer.handleTap(offsetX, offsetY, () => {
                 this.render()
             })
         }
+    }
+
+    handleSocket() {
+        this.socket = io.connect('http://localhost:8000/rl')
+        this.socket.on('newServerRect', (data) => {
+            console.log("new server rect")
+            const {offsetX, offsetY} = data
+            this.renderer.handleSocket(offsetX, offsetY, () => {
+                this.render()
+            })
+        })
     }
 
     static init() {
@@ -204,5 +235,6 @@ class Stage {
         stage.initCanvas()
         stage.render()
         stage.handleTap()
+        stage.handleSocket()
     }
 }
